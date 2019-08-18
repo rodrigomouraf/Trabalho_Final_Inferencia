@@ -1,0 +1,175 @@
+---
+title: "Estimação dos parâmetros do modelo logístico de três parâmetros"
+author: "Nivea S Zamaro - Rodrigo Moura Ferreira"
+date: "25 de novembro de 2018"
+bibliography: ReferenciasBiblio.bib
+output: html_document
+---
+#Introdução
+
+  Neste documento iremos apresentar a estimação dos parâmetros do modelo logístico de três parâmetros.
+  As principais ferramentas no desenvolvimento do trabalho são técnicas de estatística inferencial atreladas às de computacionais. Foi utilizado o software R, versão 3.5.1.
+  Para um melhor entendimento das funções, na programação, sugerimos usar o RStudio. Basta colocar "?NomeFunção()" e rodar o código. Assim aparecerão as especificações dela.
+  O modelo estatístico para a função logística de três parâmetros é usualmente aplicado na biologia (especialmente ecologia), em campos como redes neurais, também na biomatemática, química, demografia, economia, geociências, psicologia, matemática, probabilidade, sociologia, ciências políticas e estatísticas @Wikp. Para tanto usa-se parametrizações mais apropriadas em cada caso.
+
+#Especificações matemáticas do modelo
+
+  Função Logítica de três parâmetros
+  
+$$
+Y\sim{}N(f(L,k,\overline{y}),\sigma^2)
+$$
+
+  
+  Função do Modelo Logístico de três parâmetros: 
+$$f\left(L, k, \overline{y}\right)=\frac{L}{(1+exp(-k\cdot(yi-\overline{y})))}$$
+A função logística de três parâmetros tem formato de uma sigmóide.  Os parâmetros da função são (L, K, $\overline{x}$) que significam: 
+
+ L = assíntota da curva
+
+ K = Declividade da curva
+
+$\overline{y}$ = Valor yi no ponto médio da curva.
+
+  O domínio (Suporte) dessa função está entre os números reais com  intervalo entre $-\infty$  $\le$  x $\le$ $+\infty$ sendo que quando o x tende a $-\infty$ a imagem tende a zero e quando x tende a $+\infty$ a imagem tende a L. @Wikp
+  Os dados para este modelo foram simulados, testados empiricamente.
+  
+  A função densidade de probabilidade do modelo é dada por:
+$$
+f\left(L, k, \overline{y}\right)=\frac{1}{\sigma\cdot\sqrt{2\pi}}\cdot e^{-\frac{1}{2\cdot \sigma^2}\cdot\left(y-\frac{L}{(1+exp(-k*(yi-\overline{y})))} \right)^2}
+$$
+
+  Considere o conjunto de $\sum_{i=1}^n(yi)$ sendo yi (informação observada), com índice variando de 1 a n, variáveis aleatórias contínuas, independentes e identicamente distribuídas.
+  Demonstraremos aqui que a variável aleatória observada \overline{yi} tem distribuição assintótica Normal. A Normal é indexada por dois tipos de parâmetros, cujo espaço paramétrico de $\mu$, que significa a média, são os Reais e  $\sigma^2$, a variância, são os Reais positivos. Foi considerado $\sigma$ conhecido, fixado em 0.05. @Master
+
+## Verossimilhança
+  
+Verossimilhança:
+
+$$ 
+L\left(L, k, \overline{y}|yi\right)=\prod_{i=1}^{n} \frac{1}{\sigma\cdot\sqrt{2\pi}}\cdot e^{-\frac{1}{2\cdot \sigma^2}\cdot\left(yi-\frac{L}{(1+exp(-k*(yi-\overline{y})))} \right)^2} 
+$$
+
+Resolvendo este produtório ficamos com a seguinte expressão:
+
+$$
+L\left(L, k, \overline{y}|yi\right)=\left(2\pi\right)^{-\frac{n}{2}}.\sigma^{-n}\exp\left\{-\frac{1}{2\sigma^2}\sum_{n=1}^n\left(yi-\frac{L}{1+\exp\left\{-k\left(yi-\overline{y}\right)\right\}}\right)^2\right\}
+$$
+
+Log-verossimilhança:
+
+$$
+l\left(L, k, \overline{y}|yi\right)=-\frac{n}{2}\cdot\log\left(2\pi\right)-n\log\left(\sigma\right)-\frac{1}{2\sigma^2}\sum_{n=1}^n\left(yi-\frac{L}{1+\exp\left\{-k\left(yi-\overline{y}\right)\right\}}\right)^2
+$$
+
+##Inferência computacional
+
+##Simulação
+ Abaixo a simulação do modelo para chegar nas características necessárias.
+```{r vetorx, funLogis, echo=TRUE}
+
+## Foi criada uma sequência de valores ordenados usando a função seq() do RStudio.
+## Foram 1000 variá  veis aleatórias para deixar a relação mais densa.
+vetorx <- seq(-6, 6, l=1000)
+##Agora vamos criar nossa função Logistica com três parâmetros
+funLogis <- function(l, k , xo, xi){
+return(l/(1+exp(-k*(xi-xo)))) 
+}
+```
+  A elaboração da função Logística de três parâmetros vem agora. O vetor x com as 1000 observações está dentro do intervalo [-6,6].
+O teste do modelo verifica a estrutura requerida:
+```{r avalia, vetorx, obs, echo=TRUE}
+## O objeto “avalia” é um vetor criado para entrada de dados, inicialmente nulo.
+## ...conter a média para cada yi
+
+avalia <- c()
+
+## Quando as iterações são efetuadas, temos o retorno das imagens da função, dado yi
+## seguida do plot para conferência do resultado do teste.
+for(i in 1:length(vetorx))
+  {avalia[i] <- funLogis(1, 1, 0, vetorx[i])}
+
+
+```
+##Estatítica Descritiva
+```{r, echo=FALSE}
+plot(avalia~vetorx)
+
+```
+ 
+ Comprovamos o efeito desejado como visto na curva sigmóide.
+Os números armazenados no vetor avalia, são as esperanças de cada variável aleatória observada. Já o “vetory” será utilizado para gerar outro vetor. Agora de números aleatórios com distribuição de média igual à função Logística simulada acima, ou seja, com média igual a “avalia”.
+
+```{r, echo=TRUE}
+## Criação do vetory:
+
+vetory <- rnorm(1000, mean = avalia, sd = 0.05)
+
+```
+  Até o momento todas as informções necessárias para começar o processo de estimação dos parâmetros estão ok. Está terminada a simulação.
+  
+##Inferência Paramétrica
+
+
+```{r logVero, output, echo=TRUE}
+
+## Vamos aqui construir o Estimador dos nossos parâmetros já descritos acima.
+## Primeiro iremos construir nossa função de logVerossimilhança
+logVero <- function(par, vetorx, y) {
+mu = funLogis(par[1], par[2], par[3], vetorx)
+sigma <- 0.05
+output <- -sum(dnorm(x = vetory, mean = mu, sd = sigma, log = TRUE))
+return (output)
+}
+## vetor par é refetenciado por (L, k, y)
+
+```
+  Note que retornamos acima a função output multiplicada por (-1), processo esse que ocorre nas somas das dnorm. Essa multiplicação faz-se necessária para poder usar a  função optim() que permite um melhor resultado para os parâmetros. Ver $par, dados previamente quando chamarmos a função.
+
+Observe:
+
+```{r op, echo=TRUE}
+
+op <- optim(par = c(1, 1, 0), fn = logVero, vetorx = vetorx, y = y, hessian = TRUE)
+
+```
+
+```{r, echo=FALSE}
+
+op
+```
+##Itervalo de Confiança
+  A variância dos dados nos permite gerar o intervalo de confiança. Obtemos aqui, a variância. pelo seguinte procedimento:
+```{r, echo=TRUE} 
+
+## Matriz de informação observada
+inv_io <- solve(op$hessian)
+inv_io
+
+## Sabemos que a esperança de um número é o próprio número
+## também sabemos que o erro é a raiz da variância
+
+erro <- sqrt(diag(inv_io))
+erro
+
+## Teste com 95% de confiança
+
+teste95 <- qnorm(0.975)*erro
+ic_max <- op$par + teste95
+ic_min <- op$par - teste95
+parametros <- c("l", "k" , "x")
+inter_con <- data.frame("par" = parametros,  " = (",max = ic_min,";", min = ic_max,")")
+
+## Intervalo de confiança calculado. Lembrando que este intervalo tem 95% de
+## chance de conter a verdadeira média.
+
+```
+
+```{r, echo=FALSE}
+
+inter_con
+```
+
+##Referências
+@ModeloNL
+@Master
